@@ -28,6 +28,7 @@ yarn-error.log*
 *.sw?
 .idea/
 .vscode/
+*.tsbuildinfo
 
 # Antigravity / Agent temporary files
 scratch/
