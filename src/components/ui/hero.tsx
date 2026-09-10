@@ -1,253 +1,340 @@
-'use client';
+"use client"
+import { useEffect, useRef, useState } from "react"
+import dynamic from "next/dynamic"
+import { motion } from "framer-motion"
 
-import React, { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-import Image from 'next/image';
-import { motion, Variants } from 'framer-motion';
-import { ArrowDown, Github, MapPin, Download, Sparkles } from 'lucide-react';
-import { profileData } from '@/data/profile';
-import { Button } from './Button';
-
-// Dynamically import MeshGradient with ssr: false to prevent WebGL hydration blocking in Next.js
+// Dynamically import shader components with ssr: false to guarantee Next.js SSR compatibility
 const MeshGradient = dynamic(
-  () => import('@paper-design/shaders-react').then((mod) => mod.MeshGradient),
-  {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-[#05070A]" />,
-  }
-);
+  () => import("@paper-design/shaders-react").then((mod) => mod.MeshGradient as React.ComponentType<any>),
+  { ssr: false }
+)
+const PulsingBorder = dynamic(
+  () => import("@paper-design/shaders-react").then((mod) => mod.PulsingBorder as React.ComponentType<any>),
+  { ssr: false }
+)
 
-export interface PortfolioHeroProps {
-  name?: string;
-  role?: string;
-  description?: string;
-  university?: string;
-  location?: string;
-  statusBadge?: string;
-  githubUrl?: string;
-  projectsHref?: string;
-  resumeUrl?: string;
-  photoUrl?: string;
-}
-
-export const PortfolioHero: React.FC<PortfolioHeroProps> = ({
-  name = profileData.name,
-  role = profileData.role,
-  description = profileData.bio,
-  university = profileData.university,
-  location = profileData.location,
-  statusBadge = profileData.statusBadge,
-  githubUrl = profileData.githubUrl,
-  projectsHref = '#projects',
-  resumeUrl = profileData.resumeUrl,
-  photoUrl = profileData.photoUrl || '/images/sanatan-roy.png',
-}) => {
-  const [mounted, setMounted] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+export default function ShaderShowcase() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [isActive, setIsActive] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true);
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-    const handleChange = () => setPrefersReducedMotion(mediaQuery.matches);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
+    setMounted(true)
+    const handleMouseEnter = () => setIsActive(true)
+    const handleMouseLeave = () => setIsActive(false)
 
-  // Motion variants for smooth, non-disruptive entrance (<1s total)
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.12,
-        delayChildren: 0.1,
-      },
-    },
-  };
+    const container = containerRef.current
+    if (container) {
+      container.addEventListener("mouseenter", handleMouseEnter)
+      container.addEventListener("mouseleave", handleMouseLeave)
+    }
 
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 16 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const },
-    },
-  };
-
-  const photoVariants: Variants = {
-    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 20, scale: prefersReducedMotion ? 1 : 0.98 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] as const },
-    },
-  };
+    return () => {
+      if (container) {
+        container.removeEventListener("mouseenter", handleMouseEnter)
+        container.removeEventListener("mouseleave", handleMouseLeave)
+      }
+    }
+  }, [])
 
   return (
-    <section className="relative w-full min-h-[100svh] flex flex-col justify-between overflow-hidden bg-[#05070A] text-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-      {/* Procedural Atmospheric Shader Layer (SSR Safe & Typed Correctly) */}
-      {mounted && !prefersReducedMotion && (
-        <div className="absolute inset-0 pointer-events-none opacity-50 mix-blend-screen z-0">
+    <div ref={containerRef} className="min-h-screen bg-black relative overflow-hidden">
+      <svg className="absolute inset-0 w-0 h-0">
+        <defs>
+          <filter id="glass-effect" x="-50%" y="-50%" width="200%" height="200%">
+            <feTurbulence baseFrequency="0.005" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="0.3" />
+            <feColorMatrix
+              type="matrix"
+              values="1 0 0 0 0.02
+                      0 1 0 0 0.02
+                      0 0 1 0 0.05
+                      0 0 0 0.9 0"
+              result="tint"
+            />
+          </filter>
+          <filter id="gooey-filter" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+            <feColorMatrix
+              in="blur"
+              mode="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9"
+              result="gooey"
+            />
+            <feComposite in="SourceGraphic" in2="gooey" operator="atop" />
+          </filter>
+          <filter id="logo-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#06b6d4" />
+            <stop offset="50%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#0891b2" />
+          </linearGradient>
+          <linearGradient id="hero-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="30%" stopColor="#06b6d4" />
+            <stop offset="70%" stopColor="#f97316" />
+            <stop offset="100%" stopColor="#ffffff" />
+          </linearGradient>
+          <filter id="text-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+      </svg>
+
+      {mounted && (
+        <>
           <MeshGradient
-            colors={["#05070A", "#111827", "#1E3A5F", "#0E7490"]}
-            speed={0.012}
-            style={{ width: '100%', height: '100%' }}
+            className="absolute inset-0 w-full h-full"
+            colors={["#000000", "#06b6d4", "#0891b2", "#164e63", "#f97316"]}
+            speed={0.3}
+            backgroundColor="#000000"
           />
-        </div>
+          <MeshGradient
+            className="absolute inset-0 w-full h-full opacity-60"
+            colors={["#000000", "#ffffff", "#06b6d4", "#f97316"]}
+            speed={0.2}
+            wireframe="true"
+            backgroundColor="transparent"
+          />
+        </>
       )}
 
-      {/* Controlled Dark Backdrop Overlay for Guaranteed Contrast (4.5:1+) */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#05070A] via-[#05070A]/85 to-transparent pointer-events-none z-0" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#05070A]/90 via-[#05070A]/60 to-transparent pointer-events-none z-0" />
-
-      {/* Main Two-Column Composition Container */}
-      <div className="relative z-10 max-w-[1200px] w-full mx-auto my-auto py-8 lg:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          
-          {/* Left Column: Text & Hero Hierarchy */}
-          <motion.div
-            variants={containerVariants}
-            initial={prefersReducedMotion ? 'visible' : 'hidden'}
-            animate="visible"
-            className="lg:col-span-7 space-y-6 text-left"
+      <header className="relative z-20 flex items-center justify-between p-6">
+        <motion.div
+          className="flex items-center group cursor-pointer"
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+        >
+          <motion.svg
+            fill="currentColor"
+            viewBox="0 0 100 100"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            className="size-10 text-white group-hover:drop-shadow-lg transition-all duration-300"
+            style={{
+              filter: "url(#logo-glow)",
+            }}
+            whileHover={{
+              fill: "url(#logo-gradient)",
+              rotate: [0, -2, 2, 0],
+              transition: {
+                fill: { duration: 0.3 },
+                rotate: { duration: 0.6, ease: "easeInOut" },
+              },
+            }}
           >
-            {/* Status Badge */}
-            <motion.div variants={itemVariants} className="inline-block">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-medium backdrop-blur-md shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                {statusBadge}
-              </div>
-            </motion.div>
+            <motion.path
+              d="M15 85V15h12l18 35 18-35h12v70h-12V35L45 70h-10L17 35v50H15z"
+              initial={{ pathLength: 1 }}
+              whileHover={{
+                pathLength: [1, 0, 1],
+                transition: { duration: 1.2, ease: "easeInOut" },
+              }}
+            />
+          </motion.svg>
 
-            {/* Hero Typography Stack */}
-            <motion.div variants={itemVariants} className="space-y-2">
-              <span className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-indigo-400">
-                HI, I'M
-              </span>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-white uppercase">
-                {name}
-              </h1>
-              <p className="text-xl sm:text-2xl font-bold text-sky-400">
-                {role}
-              </p>
-            </motion.div>
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 bg-white/60 rounded-full"
+                style={{
+                  left: `${20 + Math.random() * 60}%`,
+                  top: `${20 + Math.random() * 60}%`,
+                }}
+                animate={{
+                  y: [-10, -20, -10],
+                  x: [0, Math.random() * 20 - 10, 0],
+                  opacity: [0, 1, 0],
+                  scale: [0, 1, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  delay: i * 0.2,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+          </div>
+        </motion.div>
 
-            {/* Narrative Summary & Academic Note */}
-            <motion.div variants={itemVariants} className="space-y-3">
-              <p className="text-base sm:text-lg text-slate-300 max-w-xl leading-relaxed">
-                {description}
-              </p>
-              
-              <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-400 flex-wrap pt-1">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-indigo-400" />
-                  {university}
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-indigo-400" />
-                  {location}
-                </span>
-              </div>
-            </motion.div>
+        {/* Navigation */}
+        <nav className="flex items-center space-x-2">
+          <a
+            href="#"
+            className="text-white/80 hover:text-white text-xs font-light px-3 py-2 rounded-full hover:bg-white/10 transition-all duration-200"
+          >
+            Features
+          </a>
+          <a
+            href="#"
+            className="text-white/80 hover:text-white text-xs font-light px-3 py-2 rounded-full hover:bg-white/10 transition-all duration-200"
+          >
+            Pricing
+          </a>
+          <a
+            href="#"
+            className="text-white/80 hover:text-white text-xs font-light px-3 py-2 rounded-full hover:bg-white/10 transition-all duration-200"
+          >
+            Docs
+          </a>
+        </nav>
 
-            {/* Primary Action CTAs */}
-            <motion.div variants={itemVariants} className="flex items-center gap-4 pt-4 flex-wrap">
-              <Button
-                size="lg"
-                variant="primary"
-                asLink
-                href={projectsHref}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white border-0 shadow-lg shadow-indigo-600/30"
-              >
-                View My Projects
-                <ArrowDown className="w-4 h-4 ml-1 animate-bounce" />
-              </Button>
+        {/* Login Button Group with Arrow */}
+        <div id="gooey-btn" className="relative flex items-center group" style={{ filter: "url(#gooey-filter)" }}>
+          <button className="absolute right-0 px-2.5 py-2 rounded-full bg-white text-black font-normal text-xs transition-all duration-300 hover:bg-white/90 cursor-pointer h-8 flex items-center justify-center -translate-x-10 group-hover:-translate-x-19 z-0">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7V17" />
+            </svg>
+          </button>
+          <button className="px-6 py-2 rounded-full bg-white text-black font-normal text-xs transition-all duration-300 hover:bg-white/90 cursor-pointer h-8 flex items-center z-10">
+            Login
+          </button>
+        </div>
+      </header>
 
-              <Button
-                size="lg"
-                variant="secondary"
-                asLink
-                href={githubUrl}
-                target="_blank"
-                className="bg-slate-900/80 hover:bg-slate-800 text-slate-200 border-slate-700"
-              >
-                <Github className="w-5 h-5 mr-1" />
-                GitHub ↗
-              </Button>
-
-              {resumeUrl && (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  asLink
-                  href={resumeUrl}
-                  target="_blank"
-                  className="border-slate-700 text-slate-300 hover:bg-slate-800/50"
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Resume
-                </Button>
-              )}
-            </motion.div>
+      <main className="absolute bottom-8 left-8 z-20 max-w-2xl">
+        <div className="text-left">
+          <motion.div
+            className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm mb-6 relative border border-white/10"
+            style={{
+              filter: "url(#glass-effect)",
+            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <div className="absolute top-0 left-1 right-1 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent rounded-full" />
+            <span className="text-white/90 text-sm font-medium relative z-10 tracking-wide">
+              ✨ New Paper Shaders Experience
+            </span>
           </motion.div>
 
-          {/* Right Column: Sanatan's Authentic Portrait Photo */}
-          <div className="lg:col-span-5 flex justify-center lg:justify-end">
-            <motion.div
-              variants={photoVariants}
-              initial={prefersReducedMotion ? 'visible' : 'hidden'}
-              animate="visible"
-              className="relative w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] lg:max-w-[440px]"
+          <motion.h1
+            className="text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-none tracking-tight"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            <motion.span
+              className="block font-light text-white/90 text-4xl md:text-5xl lg:text-6xl mb-2 tracking-wider"
+              style={{
+                background: "linear-gradient(135deg, #ffffff 0%, #06b6d4 30%, #f97316 70%, #ffffff 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                filter: "url(#text-glow)",
+              }}
+              animate={{
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "linear",
+              }}
             >
-              {/* Subtle Radial Glow behind Portrait */}
-              <div className="absolute inset-0 rounded-[28px] bg-gradient-to-tr from-indigo-600/25 via-sky-500/20 to-transparent blur-2xl -z-10" />
+              Beautiful
+            </motion.span>
+            <span className="block font-black text-white drop-shadow-2xl">Shader</span>
+            <span className="block font-light text-white/80 italic">Experiences</span>
+          </motion.h1>
 
-              {/* Portrait Frame Container */}
-              <div className="relative aspect-[4/5] rounded-[24px] overflow-hidden border border-white/15 bg-slate-900/60 backdrop-blur-md shadow-2xl shadow-indigo-950/60 group">
-                <Image
-                  src={photoUrl}
-                  alt="Sanatan Roy"
-                  fill
-                  priority
-                  sizes="(max-width: 640px) 240px, (max-width: 1024px) 360px, 440px"
-                  className="object-cover object-top filter brightness-[0.98] contrast-[1.02] transition-transform duration-500 group-hover:scale-[1.02]"
-                />
+          <motion.p
+            className="text-lg font-light text-white/70 mb-8 leading-relaxed max-w-xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            Create stunning visual experiences with our advanced shader technology. Interactive lighting, smooth
+            animations, and beautiful effects that respond to your every move.
+          </motion.p>
 
-                {/* Bottom Frame Overlay & Label */}
-                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-[#05070A] via-[#05070A]/70 to-transparent flex items-center justify-between text-xs">
-                  <div>
-                    <p className="font-bold text-white tracking-wide">{name}</p>
-                    <p className="text-[10px] text-slate-300 font-medium">CSE • AI & ML</p>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[10px] font-semibold">
-                    GIET University
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+          <motion.div
+            className="flex items-center gap-6 flex-wrap"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.0 }}
+          >
+            <motion.button
+              className="px-10 py-4 rounded-full bg-transparent border-2 border-white/30 text-white font-medium text-sm transition-all duration-300 hover:bg-white/10 hover:border-cyan-400/50 hover:text-cyan-100 cursor-pointer backdrop-blur-sm"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              View Pricing
+            </motion.button>
+            <motion.button
+              className="px-10 py-4 rounded-full bg-gradient-to-r from-cyan-500 to-orange-500 text-white font-semibold text-sm transition-all duration-300 hover:from-cyan-400 hover:to-orange-400 cursor-pointer shadow-lg hover:shadow-xl"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Get Started
+            </motion.button>
+          </motion.div>
+        </div>
+      </main>
+
+      <div className="absolute bottom-8 right-8 z-30">
+        <div className="relative w-20 h-20 flex items-center justify-center">
+          {mounted && (
+            <PulsingBorder
+              colors={["#06b6d4", "#0891b2", "#f97316", "#00FF88", "#FFD700", "#FF6B35", "#ffffff"]}
+              colorBack="#00000000"
+              speed={1.5}
+              roundness={1}
+              thickness={0.1}
+              softness={0.2}
+              intensity={5}
+              spotsPerColor={5}
+              spotSize={0.1}
+              pulse={0.1}
+              smoke={0.5}
+              smokeSize={4}
+              scale={0.65}
+              rotation={0}
+              frame={9161408.251009725}
+              style={{
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+              }}
+            />
+          )}
+
+          {/* Rotating Text Around the Pulsing Border */}
+          <motion.svg
+            className="absolute inset-0 w-full h-full"
+            viewBox="0 0 100 100"
+            animate={{ rotate: 360 }}
+            transition={{
+              duration: 20,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "linear",
+            }}
+            style={{ transform: "scale(1.6)" }}
+          >
+            <defs>
+              <path id="circle" d="M 50, 50 m -38, 0 a 38,38 0 1,1 76,0 a 38,38 0 1,1 -76,0" />
+            </defs>
+            <text className="text-sm fill-white/80 font-medium">
+              <textPath href="#circle" startOffset="0%">
+                Loxt - Mozzi • 21st.dev is amazing • 21st.dev is amazing • Loxt-MoZzI •
+              </textPath>
+            </text>
+          </motion.svg>
         </div>
       </div>
-
-      {/* Bottom-Right Scroll Indicator Bar */}
-      <div className="relative z-10 max-w-[1200px] w-full mx-auto flex items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-800/50">
-        <span className="font-medium">AI/ML • Software Development</span>
-
-        <a
-          href={projectsHref}
-          className="hidden sm:flex items-center gap-2 text-slate-300 hover:text-white transition-colors group"
-        >
-          <span className="uppercase tracking-widest text-[10px] font-semibold">Scroll to explore</span>
-          <div className="p-2 rounded-full bg-slate-800/80 border border-slate-700 group-hover:border-indigo-500 transition-colors">
-            <ArrowDown className="w-3.5 h-3.5 text-indigo-400 group-hover:translate-y-0.5 transition-transform" />
-          </div>
-        </a>
-      </div>
-    </section>
-  );
-};
-
-export default PortfolioHero;
+    </div>
+  )
+}
