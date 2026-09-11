@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { motion, Variants } from 'framer-motion';
 import { ArrowDown, Github, MapPin, Download, Sparkles, ArrowUpRight } from 'lucide-react';
 import { profileData } from '@/data/profile';
@@ -31,6 +32,7 @@ export interface PortfolioHeroProps {
   githubUrl?: string;
   projectsHref?: string;
   resumeUrl?: string;
+  photoUrl?: string;
 }
 
 export const PortfolioHero: React.FC<PortfolioHeroProps> = ({
@@ -43,6 +45,7 @@ export const PortfolioHero: React.FC<PortfolioHeroProps> = ({
   githubUrl = profileData.githubUrl,
   projectsHref = '#projects',
   resumeUrl = profileData.resumeUrl,
+  photoUrl = profileData.photoUrl || '/images/sanatan-roy.png',
 }) => {
   const [mounted, setMounted] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -77,6 +80,16 @@ export const PortfolioHero: React.FC<PortfolioHeroProps> = ({
     },
   };
 
+  const photoVariants: Variants = {
+    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 20, scale: prefersReducedMotion ? 1 : 0.98 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] },
+    },
+  };
+
   return (
     <section className="relative w-full min-h-[100svh] flex flex-col justify-between overflow-hidden bg-[#05070A] text-white pt-28 pb-12 px-5 sm:px-6 lg:px-8">
       {/* Calm, Premium Atmospheric Shader Background */}
@@ -94,101 +107,149 @@ export const PortfolioHero: React.FC<PortfolioHeroProps> = ({
       <div className="absolute inset-0 bg-gradient-to-t from-[#05070A] via-[#05070A]/85 to-transparent pointer-events-none z-0" />
       <div className="absolute inset-0 bg-gradient-to-r from-[#05070A]/95 via-[#05070A]/70 to-transparent pointer-events-none z-0" />
 
-      {/* Main Content Container */}
+      {/* Main Two-Column Grid Container */}
       <div className="relative z-10 max-w-[1200px] w-full mx-auto my-auto py-6 sm:py-10">
-        <motion.div
-          variants={containerVariants}
-          initial={prefersReducedMotion ? 'visible' : 'hidden'}
-          animate="visible"
-          className="max-w-2xl text-left space-y-6"
-        >
-          {/* Status Badge */}
-          <motion.div variants={itemVariants} className="inline-block">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-medium backdrop-blur-md shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              {statusBadge}
-            </div>
-          </motion.div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          
+          {/* Left Column: Text & Hero Information */}
+          <motion.div
+            variants={containerVariants}
+            initial={prefersReducedMotion ? 'visible' : 'hidden'}
+            animate="visible"
+            className="lg:col-span-7 space-y-6 text-left"
+          >
+            {/* Status Badge */}
+            <motion.div variants={itemVariants} className="inline-block">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-medium backdrop-blur-md shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                {statusBadge}
+              </div>
+            </motion.div>
 
-          {/* Typography Hierarchy */}
-          <motion.div variants={itemVariants} className="space-y-1">
-            <span className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-indigo-400 block">
-              HI, I'M
-            </span>
-            <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-white uppercase leading-none drop-shadow-md">
-              {name}
-            </h1>
-            <p className="text-xl sm:text-2xl font-bold text-sky-400 tracking-wide pt-1">
-              {role}
-            </p>
-          </motion.div>
+            {/* Typography Hierarchy */}
+            <motion.div variants={itemVariants} className="space-y-1">
+              <span className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-indigo-400 block">
+                HI, I'M
+              </span>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white uppercase leading-none drop-shadow-md">
+                {name}
+              </h1>
+              <p className="text-xl sm:text-2xl font-bold text-sky-400 tracking-wide pt-1">
+                {role}
+              </p>
+            </motion.div>
 
-          {/* Supporting Narrative Description */}
-          <motion.div variants={itemVariants} className="space-y-3">
-            <p className="text-base sm:text-lg text-slate-300 max-w-xl leading-relaxed font-normal">
-              {description}
-            </p>
-            
-            <p className="text-xs sm:text-sm text-slate-400 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-              <span>Currently pursuing B.Tech in CSE (AI & ML) at {university}.</span>
-            </p>
-          </motion.div>
+            {/* Supporting Narrative Description */}
+            <motion.div variants={itemVariants} className="space-y-3">
+              <p className="text-base sm:text-lg text-slate-300 max-w-xl leading-relaxed font-normal">
+                {description}
+              </p>
+              
+              <p className="text-xs sm:text-sm text-slate-400 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                <span>Currently pursuing B.Tech in CSE (AI & ML) at {university}.</span>
+              </p>
+            </motion.div>
 
-          {/* Career Focus & Location Bar */}
-          <motion.div variants={itemVariants} className="flex items-center gap-4 text-xs sm:text-sm text-slate-400 flex-wrap">
-            <span className="px-3 py-1 rounded-md bg-indigo-950/50 border border-indigo-500/20 text-indigo-300 font-medium">
-              AI/ML · Software Development
-            </span>
-            <span className="flex items-center gap-1.5 text-slate-400">
-              <MapPin className="w-4 h-4 text-indigo-400" />
-              {location}
-            </span>
-          </motion.div>
+            {/* Career Focus & Location Bar */}
+            <motion.div variants={itemVariants} className="flex items-center gap-4 text-xs sm:text-sm text-slate-400 flex-wrap">
+              <span className="px-3 py-1 rounded-md bg-indigo-950/50 border border-indigo-500/20 text-indigo-300 font-medium">
+                AI/ML · Software Development
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <MapPin className="w-4 h-4 text-indigo-400" />
+                {location}
+              </span>
+            </motion.div>
 
-          {/* Primary Action Call-To-Actions (CTAs) */}
-          <motion.div variants={itemVariants} className="flex items-center gap-4 pt-2 flex-wrap">
-            <Button
-              size="lg"
-              variant="primary"
-              asLink
-              href={projectsHref}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white border-0 shadow-lg shadow-indigo-600/30"
-            >
-              View My Projects
-              <ArrowDown className="w-4 h-4 ml-1.5 animate-bounce" />
-            </Button>
-
-            <Button
-              size="lg"
-              variant="secondary"
-              asLink
-              href={githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-slate-900/90 hover:bg-slate-800 text-slate-200 border-slate-700 backdrop-blur-sm"
-            >
-              <Github className="w-4 h-4 mr-2" />
-              GitHub
-              <ArrowUpRight className="w-3.5 h-3.5 ml-1 text-slate-400" />
-            </Button>
-
-            {resumeUrl && (
+            {/* Primary Action Call-To-Actions (CTAs) */}
+            <motion.div variants={itemVariants} className="flex items-center gap-4 pt-2 flex-wrap">
               <Button
                 size="lg"
-                variant="outline"
+                variant="primary"
                 asLink
-                href={resumeUrl}
+                href={projectsHref}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white border-0 shadow-lg shadow-indigo-600/30"
+              >
+                View My Projects
+                <ArrowDown className="w-4 h-4 ml-1.5 animate-bounce" />
+              </Button>
+
+              <Button
+                size="lg"
+                variant="secondary"
+                asLink
+                href={githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="border-slate-700 text-slate-300 hover:bg-slate-800/50"
+                className="bg-slate-900/90 hover:bg-slate-800 text-slate-200 border-slate-700 backdrop-blur-sm"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Resume
+                <Github className="w-4 h-4 mr-2" />
+                GitHub
+                <ArrowUpRight className="w-3.5 h-3.5 ml-1 text-slate-400" />
               </Button>
-            )}
+
+              {resumeUrl && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  asLink
+                  href={resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="border-slate-700 text-slate-300 hover:bg-slate-800/50"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Resume
+                </Button>
+              )}
+            </motion.div>
           </motion.div>
-        </motion.div>
+
+          {/* Right Column: Sanatan's Authentic Profile Photo */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-end pt-4 lg:pt-0">
+            <motion.div
+              variants={photoVariants}
+              initial={prefersReducedMotion ? 'visible' : 'hidden'}
+              animate="visible"
+              className="relative w-full max-w-[240px] sm:max-w-[300px] md:max-w-[340px] lg:max-w-[400px]"
+            >
+              {/* Subtle Radial Glow behind Portrait */}
+              <div className="absolute inset-0 rounded-[28px] bg-gradient-to-tr from-indigo-600/25 via-sky-500/20 to-transparent blur-2xl -z-10" />
+
+              {/* Portrait Frame Container */}
+              <div className="relative aspect-[4/5] rounded-[24px] overflow-hidden border border-white/15 bg-slate-900/60 backdrop-blur-md shadow-2xl shadow-indigo-950/60 group">
+                {photoUrl ? (
+                  <Image
+                    src={photoUrl}
+                    alt="Sanatan Roy"
+                    fill
+                    priority
+                    sizes="(max-width: 640px) 240px, (max-width: 1024px) 340px, 400px"
+                    className="object-cover object-top filter brightness-[0.98] contrast-[1.02] transition-transform duration-500 group-hover:scale-[1.02]"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 text-indigo-400 font-bold text-4xl">
+                    {/* Initials Fallback if photo asset is missing */}
+                    SR
+                  </div>
+                )}
+
+                {/* Bottom Frame Overlay & Label */}
+                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-[#05070A] via-[#05070A]/80 to-transparent flex items-center justify-between text-xs">
+                  <div>
+                    <p className="font-bold text-white tracking-wide">{name}</p>
+                    <p className="text-[10px] text-slate-300 font-medium">CSE • AI & ML</p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[10px] font-semibold">
+                    GIET University
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+        </div>
       </div>
 
       {/* Tasteful Bottom-Right Scroll Indicator with PulsingBorder & Circular Text */}

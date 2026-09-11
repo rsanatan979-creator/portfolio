@@ -12,6 +12,7 @@ export const Contact: React.FC = () => {
     email: '',
     subject: '',
     message: '',
+    website: '', // Honeypot field for anti-spam
   });
 
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -33,10 +34,22 @@ export const Contact: React.FC = () => {
       return;
     }
 
+    if (formData.name.trim().length < 2) {
+      setStatus('error');
+      setErrorMessage('Name must be at least 2 characters.');
+      return;
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (!emailRegex.test(formData.email.trim())) {
       setStatus('error');
       setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+
+    if (formData.message.trim().length < 10) {
+      setStatus('error');
+      setErrorMessage('Message must be at least 10 characters.');
       return;
     }
 
@@ -51,7 +64,7 @@ export const Contact: React.FC = () => {
 
       if (response.ok && data.success) {
         setStatus('success');
-        setFormData({ name: '', email: '', subject: '', message: '' });
+        setFormData({ name: '', email: '', subject: '', message: '', website: '' });
       } else {
         setStatus('error');
         setErrorMessage(data.error || 'Failed to submit message. Please try again.');
@@ -144,6 +157,20 @@ export const Contact: React.FC = () => {
                 </div>
               )}
 
+              {/* Honeypot field - invisible to human visitors */}
+              <div className="hidden" aria-hidden="true">
+                <label htmlFor="website">Website</label>
+                <input
+                  type="text"
+                  id="website"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={formData.website}
+                  onChange={handleChange}
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="name" className="block text-xs font-semibold text-primaryText-light dark:text-primaryText-dark mb-1">
@@ -173,7 +200,7 @@ export const Contact: React.FC = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    maxLength={100}
+                    maxLength={254}
                     placeholder="e.g. recruiter@example.com"
                     className="w-full px-3.5 py-2.5 text-sm rounded-tag bg-background-light dark:bg-background-dark border border-borderSubtle-light dark:border-borderSubtle-dark text-primaryText-light dark:text-primaryText-dark focus:outline-none focus:ring-2 focus:ring-brand"
                   />
@@ -207,7 +234,7 @@ export const Contact: React.FC = () => {
                   onChange={handleChange}
                   required
                   rows={4}
-                  maxLength={1000}
+                  maxLength={5000}
                   placeholder="Your message details..."
                   className="w-full px-3.5 py-2.5 text-sm rounded-tag bg-background-light dark:bg-background-dark border border-borderSubtle-light dark:border-borderSubtle-dark text-primaryText-light dark:text-primaryText-dark focus:outline-none focus:ring-2 focus:ring-brand resize-none"
                 />
