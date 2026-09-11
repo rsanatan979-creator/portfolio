@@ -141,6 +141,27 @@ export async function POST(request: Request) {
       );
     }
 
+    // 5. Optional Make.com Webhook Notification
+    const makeWebhookUrl = process.env.MAKE_WEBHOOK_URL;
+    if (makeWebhookUrl) {
+      try {
+        await fetch(makeWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: trimmedName,
+            email: trimmedEmail,
+            subject: trimmedSubject,
+            message: trimmedMessage,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } catch (makeError) {
+        console.error('[Make Webhook Error]', makeError);
+        // Non-blocking catch: user submission and email dispatch still succeed
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Message sent successfully',
